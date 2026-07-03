@@ -1,0 +1,543 @@
+{% extends "sidebar_layout.html" %} {% set active_page = 'requests' %} {% block
+title %}Total Requests - Virex{% endblock %} {% block stylesheets %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/requests.css') }}"
+/>
+<style>
+  /* Forced Override for Unified Colors */
+.t-sqli { background: rgba(245, 158, 11, 0.12) !important; color: #f59e0b !important; border-color: rgba(245, 158, 11, 0.3) !important; }
+.t-xss { background: rgba(56, 189, 248, 0.12) !important; color: #38bdf8 !important; border-color: rgba(56, 189, 248, 0.3) !important; }
+.t-brute { background: rgba(239, 68, 68, 0.12) !important; color: #f87171 !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+.t-scanner { background: rgba(34, 197, 94, 0.12) !important; color: #22c55e !important; border-color: rgba(34, 197, 94, 0.3) !important; }
+.t-ml { background: rgba(167, 139, 250, 0.12) !important; color: #a78bfa !important; border-color: rgba(167, 139, 250, 0.3) !important; }
+.t-rate { background: rgba(6, 182, 212, 0.12) !important; color: #06b6d4 !important; border-color: rgba(6, 182, 212, 0.3) !important; }
+.t-csrf { background: rgba(190, 24, 93, 0.12) !important; color: #BE185D !important; border-color: rgba(190, 24, 93, 0.3) !important; }
+.t-ssrf { background: rgba(146, 64, 14, 0.12) !important; color: #92400E !important; border-color: rgba(146, 64, 14, 0.3) !important; }
+.t-path { background: rgba(249, 115, 22, 0.12) !important; color: #F97316 !important; border-color: rgba(249, 115, 22, 0.3) !important; }
+
+.filter-csrf { --btn-color: #BE185D !important; }
+.filter-ssrf { --btn-color: #92400E !important; }
+.filter-path { --btn-color: #F97316 !important; }
+</style>
+{% endblock %} {% block content %}
+<main class="main-content">
+  <header class="section-title">
+    <h1>{{ title }}</h1>
+    <p>Complete log of all traffic processed by the system </p>
+  </header>
+
+  <!-- Summary Cards -->
+  {% set total = logs | length %} {% set clean = logs |
+  selectattr('attack_type', 'equalto', 'Clean') | list | length %} {% set
+  attacks = total - clean %} {% set blocked_count = logs | selectattr('blocked',
+  'equalto', true) | list | length %}
+
+  <div class="req-summary">
+    <div class="req-card card-total">
+      <div class="req-card-icon"><i class="fas fa-server"></i></div>
+      <div class="req-card-label">Total Requests</div>
+      <div class="req-card-value">{{ total }}</div>
+    </div>
+    <div class="req-card card-clean">
+      <div class="req-card-icon">
+        <i class="fas fa-circle-check"></i>
+      </div>
+      <div class="req-card-label">Clean</div>
+      <div class="req-card-value">{{ clean }}</div>
+    </div>
+    <div class="req-card card-attack">
+      <div class="req-card-icon">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+      <div class="req-card-label">Attacks Detected</div>
+      <div class="req-card-value">{{ attacks }}</div>
+    </div>
+    <div class="req-card card-blocked">
+      <div class="req-card-icon"><i class="fas fa-ban"></i></div>
+      <div class="req-card-label">Blocked</div>
+      <div class="req-card-value">{{ blocked_count }}</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    {% if user.role == 'user' %}
+    <div class="user-notice">
+      <i class="fas fa-list-ul"></i>
+      <h>Activity history </h2>
+    </div>
+    {% endif %} {% if user.role == 'admin' %}
+    <div class="req-toolbar">
+      <div class="filter-group">
+        <button
+          class="filter-btn filter-all active"
+          onclick="filterTable('all', this)"
+        >
+          <i class="fas fa-layer-group"></i> All
+        </button>
+        <button
+          class="filter-btn filter-clean"
+          onclick="filterTable('clean', this)"
+        >
+          <i class="fas fa-circle-check"></i> Clean
+        </button>
+        <button
+          class="filter-btn filter-sqli"
+          onclick="filterTable('sqli', this)"
+        >
+          <i class="fas fa-database"></i> SQLi
+        </button>
+        <button
+          class="filter-btn filter-xss"
+          onclick="filterTable('xss', this)"
+        >
+          <i class="fas fa-code"></i> XSS
+        </button>
+        <button
+          class="filter-btn filter-brute"
+          onclick="filterTable('brute', this)"
+        >
+          <i class="fas fa-key"></i> Brute Force
+        </button>
+        <button
+          class="filter-btn filter-scanner"
+          onclick="filterTable('scanner', this)"
+        >
+          <i class="fas fa-eye"></i> Scanner
+        </button>
+        <button class="filter-btn filter-ml" onclick="filterTable('ml', this)">
+          <i class="fas fa-brain"></i> ML
+        </button>
+        <button
+          class="filter-btn filter-rate"
+          onclick="filterTable('rate', this)"
+        >
+          <i class="fas fa-bolt"></i> Rate Limit
+        </button>
+        <button
+          class="filter-btn filter-csrf"
+          onclick="filterTable('csrf', this)"
+        >
+          <i class="fas fa-crosshairs"></i> CSRF
+        </button>
+        <button
+          class="filter-btn filter-ssrf"
+          onclick="filterTable('ssrf', this)"
+        >
+          <i class="fas fa-server"></i> SSRF
+        </button>
+        <button
+          class="filter-btn filter-path"
+          onclick="filterTable('path', this)"
+        >
+          <i class="fas fa-folder-open"></i> Path Traversal
+        </button>
+        <button
+          class="filter-btn filter-blocked"
+          onclick="filterTable('blocked', this)"
+        >
+          <i class="fas fa-ban"></i> Blocked
+        </button>
+      </div>
+      <input
+        class="req-search"
+        type="text"
+        placeholder="Search IP / type / endpoint…"
+        oninput="searchTable(this.value)"
+      />
+      <span class="row-count" id="row-count"></span>
+    </div>
+    {% endif %}
+
+    <div class="req-table-wrap">
+      <table class="req-table" id="req-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Timestamp</th>
+            <th class="admin-only">IP Address</th>
+            <th>Type</th>
+            <th>Severity</th>
+            <th class="admin-only">Method</th>
+            <th class="admin-only">Endpoint</th>
+            <th class="admin-only">Payload</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="req-tbody">
+          {% for log in logs %} 
+          {% set at = log.attack_type|default('')|string|trim|lower %}
+          {% set ty = log.type|default('')|string|trim|lower %}
+          {% set t = at or ty %}
+          
+          {% if log.blocked %}{% set row_tint = 'row-blocked-tint' %}
+          {% elif 'clean' in t %}{% set row_tint = 'row-clean-tint' %} {% else
+          %}{% set row_tint = 'row-attack-tint' %}{% endif %}
+
+          <tr
+            class="{{ row_tint }}"
+            data-type="{{ t }}"
+            data-blocked="{{ 'true' if log.blocked else 'false' }}"
+            data-search="{{ (log.ip or '') ~ ' ' ~ (log.attack_type or '') ~ ' ' ~ (log.endpoint or '') | lower }}"
+          >
+            <td class="mono idx-cell">{{ loop.index }}</td>
+            <td class="mono">{{ log.timestamp }}</td>
+            <td class="admin-only mono">{{ log.ip or '—' }}</td>
+
+            <!-- Type badge -->
+            <td>
+              {% if user.role == 'admin' %} 
+                {# High Priority Specific Matches #}
+                {% if 'ssrf' in t or 'server' in t %}
+                  <span class="threat-badge t-ssrf"><i class="fas fa-server"></i> {{ log.attack_type }}</span>
+                {% elif 'csrf' in t or 'request' in t %}
+                  <span class="threat-badge t-csrf"><i class="fas fa-crosshairs"></i> {{ log.attack_type }}</span>
+                {% elif 'path' in t or 'traversal' in t %}
+                  <span class="threat-badge t-path"><i class="fas fa-folder-open"></i> {{ log.attack_type }}</span>
+                {% elif 'sql' in t or 'injection' in t %}
+                  <span class="threat-badge t-sqli"><i class="fas fa-database"></i> {{ log.attack_type }}</span>
+                {% elif 'xss' in t or 'cross' in t or 'scripting' in t %}
+                  <span class="threat-badge t-xss"><i class="fas fa-code"></i> {{ log.attack_type }}</span>
+                {% elif 'brute' in t or 'auth' in t or 'password' in t %}
+                  <span class="threat-badge t-brute"><i class="fas fa-key"></i> {{ log.attack_type }}</span>
+                {% elif 'scan' in t or 'nmap' in t or 'recon' in t %}
+                  <span class="threat-badge t-scanner"><i class="fas fa-eye"></i> {{ log.attack_type }}</span>
+                {% elif 'ml' in t or 'anomaly' in t or 'brain' in t %}
+                  <span class="threat-badge t-ml"><i class="fas fa-brain"></i> {{ log.attack_type }}</span>
+                {% elif 'rate' in t or 'limit' in t or 'ddos' in t %}
+                  <span class="threat-badge t-rate"><i class="fas fa-bolt"></i> {{ log.attack_type }}</span>
+                {% elif 'clean' in t or t == '' %}
+                  <span class="threat-badge t-clean"><i class="fas fa-circle-check"></i> Clean</span>
+                {% else %}
+                  {# Default - NO QUESTION MARK #}
+                  <span class="threat-badge t-unknown"><i class="fas fa-shield-virus"></i> {{ log.attack_type or 'Threat' }}</span>
+                {% endif %}
+              {% else %} 
+                {# User view #}
+                {% if log.attack_type != 'Clean' %}
+                  <span class="threat-badge t-unknown"><i class="fas fa-triangle-exclamation"></i> Threat</span>
+                {% else %}
+                  <span class="threat-badge t-clean"><i class="fas fa-circle-check"></i> Clean</span>
+                {% endif %} 
+              {% endif %}
+            </td>
+
+            <!-- Severity -->
+            <td>
+              {% set sev = (log.severity or 'clean') | lower %}
+              <span class="sev-badge sev-{{ sev }}"
+                >{{ log.severity or 'Clean' }}</span
+              >
+            </td>
+
+            <td class="admin-only mono method-cell">{{ log.method or '—' }}</td>
+            <td class="admin-only mono payload-td">
+              {{ log.endpoint or '—' }}
+            </td>
+            <td class="admin-only mono payload-td">
+              {{ log.payload or log.snippet or log.description or '—' }}
+            </td>
+
+            <!-- Status -->
+            <td>
+              {% if log.blocked %}
+                <span class="status-badge s-blocked"><i class="fas fa-ban"></i> Blocked</span>
+              {% elif log.ml_detected or (log.detection_type|default('')|string|lower).startswith('ml') %}
+                <span class="status-badge s-ml"><i class="fas fa-brain"></i> ML Detected</span>
+              {% elif log.attack_type != 'Clean' %}
+                <span class="status-badge s-detected"><i class="fas fa-shield-halved"></i> Rule Detected</span>
+              {% else %}
+                <span class="status-badge s-allowed"><i class="fas fa-circle-check"></i> Allowed</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr class="empty-row">
+            <td colspan="9">
+              <i class="fas fa-inbox"></i>No requests logged yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+      <button id="btn-prev" class="filter-btn" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Previous</button>
+      <span id="page-indicator" style="color: #94a3b8; font-size: 14px; font-weight: 500;">Page 1 of 1</span>
+      <button id="btn-next" class="filter-btn" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+</main>
+{% endblock %} {% block scripts %}
+<script>
+  let activeFilter = "all";
+  let activeSearch = "";
+  let currentPage = 1;
+  const pageSize = 10;
+
+  // Auto-refresh without page reload
+  async function refreshRequestsData() {
+    try {
+      const response = await fetch('/api/dashboard/data');
+      const data = await response.json();
+      
+      if (data.stats) {
+        const stats = data.stats;
+        const totalEl = document.querySelector('.card-total .req-card-value');
+        const cleanEl = document.querySelector('.card-clean .req-card-value');
+        const attacksEl = document.querySelector('.card-attack .req-card-value');
+        const blockedEl = document.querySelector('.card-blocked .req-card-value');
+        
+        if (totalEl) totalEl.textContent = stats.total_requests;
+        if (cleanEl) cleanEl.textContent = stats.normal_requests_count;
+        if (attacksEl) attacksEl.textContent = stats.total_requests - (stats.normal_requests_count || 0);
+        if (blockedEl) blockedEl.textContent = stats.blocked_requests;
+      }
+      
+      if (data.recent_requests) {
+        const tbody = document.getElementById('req-tbody');
+        if (tbody && data.recent_requests.length > 0) {
+          const threats = data.recent_requests;
+          tbody.innerHTML = threats.map((t, i) => {
+            const type = (t.attack_type || t.type || 'clean').toLowerCase();
+            const blocked = t.blocked ? 'true' : 'false';
+            const search = `${t.attack_type || ''} ${t.endpoint || ''} ${t.ip_address || t.ip || ''}`.toLowerCase();
+            const isML = t.ml_detected || (t.detection_type && t.detection_type.toLowerCase().startsWith('ml'));
+            
+            let statusText = 'Allowed';
+            let statusClass = 's-allowed';
+            let statusIcon = 'fa-circle-check';
+            
+            if (t.blocked) {
+              statusText = 'Blocked';
+              statusClass = 's-blocked';
+              statusIcon = 'fa-ban';
+            } else if (isML) {
+              statusText = 'ML Detected';
+              statusClass = 's-ml';
+              statusIcon = 'fa-brain';
+            } else if (type !== 'clean') {
+              statusText = 'Rule Detected';
+              statusClass = 's-detected';
+              statusIcon = 'fa-shield-halved';
+            }
+
+            let rowTint = 'row-attack-tint';
+            if (t.blocked) {
+              rowTint = 'row-blocked-tint';
+            } else if (type.includes('clean') || type.includes('normal')) {
+              rowTint = 'row-clean-tint';
+            }
+
+            let badgeClass = 't-unknown';
+            let badgeIcon = 'fa-shield-virus';
+            let badgeText = t.attack_type || t.type || 'Threat';
+            
+            if (type.includes('ssrf') || type.includes('server')) {
+              badgeClass = 't-ssrf';
+              badgeIcon = 'fa-server';
+            } else if (type.includes('csrf') || type.includes('request')) {
+              badgeClass = 't-csrf';
+              badgeIcon = 'fa-crosshairs';
+            } else if (type.includes('path') || type.includes('traversal')) {
+              badgeClass = 't-path';
+              badgeIcon = 'fa-folder-open';
+            } else if (type.includes('sql') || type.includes('injection')) {
+              badgeClass = 't-sqli';
+              badgeIcon = 'fa-database';
+            } else if (type.includes('xss') || type.includes('cross') || type.includes('scripting')) {
+              badgeClass = 't-xss';
+              badgeIcon = 'fa-code';
+            } else if (type.includes('brute') || type.includes('auth') || type.includes('password')) {
+              badgeClass = 't-brute';
+              badgeIcon = 'fa-key';
+            } else if (type.includes('scan') || type.includes('nmap') || type.includes('recon')) {
+              badgeClass = 't-scanner';
+              badgeIcon = 'fa-eye';
+            } else if (type.includes('ml') || type.includes('anomaly') || type.includes('brain')) {
+              badgeClass = 't-ml';
+              badgeIcon = 'fa-brain';
+            } else if (type.includes('rate') || type.includes('limit') || type.includes('ddos')) {
+              badgeClass = 't-rate';
+              badgeIcon = 'fa-bolt';
+            } else if (type.includes('clean') || type.includes('normal') || type === '') {
+              badgeClass = 't-clean';
+              badgeIcon = 'fa-circle-check';
+              badgeText = 'Clean';
+            }
+
+            const userRole = "{{ user.role }}";
+            let badgeHTML = '';
+            if (userRole === 'admin') {
+              badgeHTML = `<span class="threat-badge ${badgeClass}"><i class="fas ${badgeIcon}"></i> ${badgeText}</span>`;
+            } else {
+              if (type !== 'clean' && type !== 'normal') {
+                badgeHTML = `<span class="threat-badge t-unknown"><i class="fas fa-triangle-exclamation"></i> Threat</span>`;
+              } else {
+                badgeHTML = `<span class="threat-badge t-clean"><i class="fas fa-circle-check"></i> Clean</span>`;
+              }
+            }
+
+            return `<tr class="${rowTint}" data-type="${type}" data-blocked="${blocked}" data-search="${search}">
+              <td class="mono idx-cell">${t.threat_log_id || t.id || i+1}</td>
+              <td class="mono">${t.created_at || t.timestamp || '-'}</td>
+              <td class="admin-only mono">${t.ip_address || t.ip || '-'}</td>
+              <td>${badgeHTML}</td>
+              <td><span class="sev-badge sev-${(t.severity || 'clean').toLowerCase()}">${t.severity || 'Clean'}</span></td>
+              <td class="admin-only mono method-cell">${t.method || '-'}</td>
+              <td class="admin-only mono payload-td">${t.endpoint || '-'}</td>
+              <td class="admin-only mono payload-td">${t.payload || t.description || t.snippet || '-'}</td>
+              <td><span class="status-badge ${statusClass}"><i class="fas ${statusIcon}"></i> ${statusText}</span></td>
+            </tr>`;
+          }).join('');
+          
+          applyFilters();
+        }
+      }
+    } catch (err) {}
+  }
+  
+  setInterval(refreshRequestsData, 1000);
+
+  function filterTable(type, btn) {
+    activeFilter = type;
+    currentPage = 1;
+    document
+      .querySelectorAll(".filter-btn")
+      .forEach((b) => {
+        if (b.id !== 'btn-prev' && b.id !== 'btn-next') {
+          b.classList.remove("active");
+        }
+      });
+    if (btn) btn.classList.add("active");
+    applyFilters();
+  }
+
+  function searchTable(q) {
+    activeSearch = q.toLowerCase().trim();
+    currentPage = 1;
+    applyFilters();
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      applyFilters();
+    }
+  }
+
+  function nextPage() {
+    const rows = document.querySelectorAll("#req-tbody tr[data-type]");
+    let matchingCount = 0;
+    rows.forEach((row) => {
+      const t = row.dataset.type || "";
+      const blocked = row.dataset.blocked === "true";
+      const search = (row.dataset.search || "").toLowerCase();
+      let show = true;
+
+      if (activeFilter !== "all") {
+        if (activeFilter === "clean") show = t === "clean" || t === "normal";
+        else if (activeFilter === "blocked") show = blocked;
+        else if (activeFilter === "sqli") show = t.includes("sql");
+        else if (activeFilter === "xss") show = t.includes("xss");
+        else if (activeFilter === "brute") show = t.includes("brute") || t.includes("auth");
+        else if (activeFilter === "scanner") show = t.includes("scan");
+        else if (activeFilter === "ml")
+          show = t.includes("ml") || t.includes("anomaly");
+        else if (activeFilter === "rate") show = t.includes("rate") || t.includes("limit");
+        else if (activeFilter === "csrf") show = t.includes("csrf");
+        else if (activeFilter === "ssrf") show = t.includes("ssrf");
+        else if (activeFilter === "path") show = t.includes("path") || t.includes("traversal");
+      }
+
+      if (show && activeSearch) show = search.includes(activeSearch);
+      if (show) matchingCount++;
+    });
+
+    const totalPages = Math.ceil(matchingCount / pageSize) || 1;
+    if (currentPage < totalPages) {
+      currentPage++;
+      applyFilters();
+    }
+  }
+
+  function applyFilters() {
+    const rows = document.querySelectorAll("#req-tbody tr[data-type]");
+    let matchingRows = [];
+    
+    rows.forEach((row) => {
+      const t = row.dataset.type || "";
+      const blocked = row.dataset.blocked === "true";
+      const search = (row.dataset.search || "").toLowerCase();
+      let show = true;
+
+      if (activeFilter !== "all") {
+        if (activeFilter === "clean") show = t === "clean" || t === "normal";
+        else if (activeFilter === "blocked") show = blocked;
+        else if (activeFilter === "sqli") show = t.includes("sql");
+        else if (activeFilter === "xss") show = t.includes("xss");
+        else if (activeFilter === "brute") show = t.includes("brute") || t.includes("auth");
+        else if (activeFilter === "scanner") show = t.includes("scan");
+        else if (activeFilter === "ml")
+          show = t.includes("ml") || t.includes("anomaly");
+        else if (activeFilter === "rate") show = t.includes("rate") || t.includes("limit");
+        else if (activeFilter === "csrf") show = t.includes("csrf");
+        else if (activeFilter === "ssrf") show = t.includes("ssrf");
+        else if (activeFilter === "path") show = t.includes("path") || t.includes("traversal");
+      }
+
+      if (show && activeSearch) show = search.includes(activeSearch);
+      if (show) {
+        matchingRows.push(row);
+      } else {
+        row.classList.add("row-hidden");
+      }
+    });
+
+    const totalPages = Math.ceil(matchingRows.length / pageSize) || 1;
+    if (currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = currentPage * pageSize;
+
+    matchingRows.forEach((row, index) => {
+      if (index >= startIndex && index < endIndex) {
+        row.classList.remove("row-hidden");
+      } else {
+        row.classList.add("row-hidden");
+      }
+    });
+
+    // Update pagination controls state
+    const prevBtn = document.getElementById("btn-prev");
+    const nextBtn = document.getElementById("btn-next");
+    const pageIndicator = document.getElementById("page-indicator");
+
+    if (prevBtn) {
+      prevBtn.disabled = currentPage <= 1;
+      prevBtn.style.opacity = currentPage <= 1 ? "0.5" : "1";
+      prevBtn.style.cursor = currentPage <= 1 ? "not-allowed" : "pointer";
+    }
+    if (nextBtn) {
+      nextBtn.disabled = currentPage >= totalPages;
+      nextBtn.style.opacity = currentPage >= totalPages ? "0.5" : "1";
+      nextBtn.style.cursor = currentPage >= totalPages ? "not-allowed" : "pointer";
+    }
+    if (pageIndicator) {
+      pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    }
+
+    const counter = document.getElementById("row-count");
+    if (counter) {
+      counter.textContent = `${matchingRows.length} row${matchingRows.length !== 1 ? "s" : ""}`;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    applyFilters();
+  });
+</script>
+{% endblock %}

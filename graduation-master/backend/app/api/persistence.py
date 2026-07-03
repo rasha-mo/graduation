@@ -1,0 +1,147 @@
+"""
+Persistence Manager (DB-backed)
+================================
+تم استبدال JSON files بـ SQLite عبر app/database.py
+الـ API ظاهر زي ما كان (نفس أسماء الدوال) عشان باقي الكود ميتأثرش.
+"""
+import time
+import threading
+import tempfile
+import shutil
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+# ── المسارات القديمة محتفظ بيها للـ compatibility ─────────────
+PROJECT_ROOT      = Path(__file__).parent.parent.parent
+DATA_DIR          = PROJECT_ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+STATS_FILE        = DATA_DIR / "stats.json"
+BLOCKED_IPS_FILE  = DATA_DIR / "blocked_ips.json"
+USER_ATTACKS_FILE = DATA_DIR / "user_attacks.json"
+ML_LOG_FILE       = DATA_DIR / "ml_detections.jsonl"
+
+_lock    = threading.Lock()
+_ml_lock = threading.Lock()
+
+# ── كل العمليات الحقيقية بتروح للـ DB ─────────────────────────
+from app import database as db
+
+# Dedup window: 5 seconds – allows same IP+attack+endpoint to be logged again after expiry
+_ATTACK_DEDUP_SECONDS = 5
+
+
+# ── Stats ─────────────────────────────────────────────────────
+def load_stats() -> dict:
+    return db.load_stats()
+
+
+def save_stats(total: int, blocked: int, normal_requests_count: int = 0):
+    db.save_stats(total, blocked, normal_requests_count=normal_requests_count)
+
+
+# ── Blocked IPs ───────────────────────────────────────────────
+def load_blocked_ips() -> dict:
+    return db.load_blocked_ips()
+
+
+def save_blocked_ips(blocked: dict):
+    db.save_blocked_ips(blocked)
+
+
+# ── Attack History ────────────────────────────────────────────
+# Track unique attacks to prevent duplicate entries
+_seen_attacks = {}
+
+def load_user_attacks() -> dict:
+    return db.load_user_attacks()
+
+
+def clear_seen_attacks():
+    global _seen_attacks
+    _seen_attacks.clear()
+
+
+def append_user_attack(user_key: str, attack_type: str, ip: str,
+                       endpoint: str, method: str = "", severity: str = "Medium",
+                       blocked: bool = False, description: str = None):
+    key = (ip, attack_type, endpoint)
+    now = time.time()
+    
+    if key in _seen_attacks:
+        if now - _seen_attacks[key] < _ATTACK_DEDUP_SECONDS:
+            return
+    
+    _seen_attacks[key] = now
+    
+    # Prevent memory leak: trim expired entries when dict grows too large
+    if len(_seen_attacks) > 500:
+        expiry = now - _ATTACK_DEDUP_SECONDS
+        expired_keys = [k for k, v in _seen_attacks.items() if v < expiry]
+        for k in expired_keys:
+            del _seen_attacks[k]
+    
+    # Determine block status based on severity
+    should_block = severity in ("Critical", "High")
+    
+    threat_log_id = db.append_user_attack(
+        user_key, attack_type, ip, endpoint, method, severity,
+        blocked=should_block, description=description
+    )
+    
+    # ── إنشاء blocked_event عشان يظهر في جرس التنبيهات (SSE) ──
+    if threat_log_id:
+        try:
+            db.log_blocked_event(
+                ip_address=ip, attack_type=attack_type, severity=severity,
+                ml_detected=False, confidence=0.0,
+                threat_log_id=threat_log_id
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log blocked_event: {e}")
+    
+    # ── إنشاء إشعار لكل مشرف/محلل ────────────────────────────
+    try:
+        users = db.get_all_users()
+        admin_analyst_ids = [
+            u["user_id"] for u in users
+            if u.get("role_name") in ("admin", "analyst")
+        ]
+        message = f"تنبيه: {attack_type}"
+        for uid in admin_analyst_ids:
+            try:
+                db.create_notification(uid, message, notif_type="threat",
+                                       threat_log_id=threat_log_id)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.warning(f"Failed to create notifications: {e}")
+
+
+def get_user_attacks(user_key: str) -> list:
+    return db.get_user_attacks(user_key)
+
+
+def clear_user_attacks(user_key: str):
+    db.clear_user_attacks(user_key)
+
+
+def clear_all_attacks():
+    db.clear_all_attacks()
+
+
+# ── ML Detections ─────────────────────────────────────────────
+def log_ml_detection(text_snippet: str, risk_score: float,
+                     action: str, attack_type: str, ip: str, endpoint: str):
+    db.log_ml_detection(text_snippet, risk_score, action, attack_type, ip, endpoint)
+
+
+def get_ml_detections(limit: int = 100) -> list:
+    return db.get_ml_detections(limit)
+
+
+# ── Rules ─────────────────────────────────────────────────────
+def get_rules(active_only: bool = True) -> list:
+    return db.get_rules(active_only)
