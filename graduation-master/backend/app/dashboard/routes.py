@@ -58,6 +58,10 @@ def create_dashboard_app():
     from app.auth.routes import auth_bp
     app.register_blueprint(auth_bp)
 
+    # Register RAG Blueprint
+    from app.controllers.rag_controller import rag_bp
+    app.register_blueprint(rag_bp, url_prefix='/api/rag')
+
     # ── Context processor: inject current_user into all templates ──
     @app.context_processor
     def inject_user():
@@ -95,7 +99,7 @@ def create_dashboard_app():
         '/api/users', '/api/rules', '/api/blocked-ips', '/api/reports',
         '/api/chatbot', '/api/threats', '/api/my-attacks', '/api/clear-attacks',
         '/api/request-reset-otp', '/api/verify-reset-otp', '/api/subscription/',
-        '/api/incident/'
+        '/api/incident/', '/api/rag/'
     )
     # Dashboard internal pages - should not be counted as traffic
     SKIP_EXACT = {
@@ -105,7 +109,7 @@ def create_dashboard_app():
         '/threats/ml-detection', '/threats/brute-force',
         '/threats/scanner', '/threats/rate-limit',
         '/login', '/signup', '/', '/logout', '/forbidden',
-        '/privacy', '/terms', '/docs', '/support',
+        '/privacy', '/terms', '/docs', '/support', '/rag-analyst',
         '/attack-history', '/threats-overview', '/user-manager',
         '/settings', '/notifications', '/pricing', '/payment', '/blacklist'
     }
@@ -246,6 +250,10 @@ def create_dashboard_app():
             return jsonify({'error': msg}), 400
         _db.mark_password_reset_used(user_id)
         return jsonify({'message': 'Password reset successfully'}), 200
+
+    @app.route('/rag-analyst')
+    def rag_analyst_page():
+        return render_template('rag_analyst.html')
 
     @app.route('/')
     def index_page():

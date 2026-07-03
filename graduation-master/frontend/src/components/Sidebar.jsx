@@ -118,6 +118,12 @@ export default function Sidebar({
       icon: FiBarChart2,
     },
     {
+      label: 'RAG Analyst',
+      to: '/rag-analyst',
+      end: true,
+      icon: CpuChipIcon,
+    },
+    {
       label: 'Settings',
       to: '/settings',
       end: true,

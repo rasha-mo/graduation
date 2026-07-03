@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VIREX AI | RAG Security Assistant</title>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/theme.css" />
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/landing.css" />
+    <script src="/static/javascript/theme.js"></script>
+
+    <!-- RAG Analyst Custom Styles -->
+    <style>
+      body {
+        background: radial-gradient(circle at 50% 50%, #151824 0%, #0d0f17 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+      }
+
+      .chat-wrapper {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 80px 20px 40px 20px;
+        position: relative;
+      }
+
+      .chat-container {
+        width: 100%;
+        max-width: 900px;
+        height: 700px;
+        background: rgba(25, 28, 43, 0.45);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(224, 70, 186, 0.15);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(224, 70, 186, 0.05);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .chat-header-custom {
+        padding: 24px 32px;
+        background: rgba(33, 37, 56, 0.5);
+        border-bottom: 1px solid rgba(224, 70, 186, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .ai-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #e046ba 0%, #792b9d 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 20px rgba(224, 70, 186, 0.3);
+      }
+
+      .ai-badge i {
+        font-size: 22px;
+        color: #fff;
+      }
+
+      .header-info h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.5px;
+        background: linear-gradient(90deg, #fff 0%, #e046ba 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .header-info p {
+        font-size: 13px;
+        color: var(--text-muted, #8b92b6);
+        margin: 4px 0 0 0;
+      }
+
+      .messages-box {
+        flex: 1;
+        padding: 32px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .message-row {
+        display: flex;
+        gap: 16px;
+        max-width: 80%;
+      }
+
+      .message-row.user-row {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+      }
+
+      .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .bot-row .avatar {
+        background: rgba(224, 70, 186, 0.15);
+        border: 1px solid rgba(224, 70, 186, 0.3);
+        color: #e046ba;
+        box-shadow: 0 0 10px rgba(224, 70, 186, 0.1);
+      }
+
+      .user-row .avatar {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+
+      .message-bubble {
+        padding: 16px 20px;
+        border-radius: 16px;
+        font-size: 15px;
+        line-height: 1.6;
+        word-break: break-word;
+      }
+
+      .bot-row .message-bubble {
+        background: rgba(33, 37, 56, 0.7);
+        border: 1px solid rgba(224, 70, 186, 0.08);
+        color: #d1d5db;
+        border-top-left-radius: 4px;
+      }
+
+      .user-row .message-bubble {
+        background: linear-gradient(135deg, rgba(224, 70, 186, 0.25) 0%, rgba(121, 43, 157, 0.25) 100%);
+        border: 1px solid rgba(224, 70, 186, 0.3);
+        color: #fff;
+        border-top-right-radius: 4px;
+        box-shadow: 0 4px 15px rgba(224, 70, 186, 0.05);
+      }
+
+      .typing-bubble {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 16px 24px;
+        background: rgba(33, 37, 56, 0.7);
+        border: 1px solid rgba(224, 70, 186, 0.08);
+        border-radius: 16px;
+        border-top-left-radius: 4px;
+        align-self: flex-start;
+      }
+
+      .typing-dot {
+        width: 8px;
+        height: 8px;
+        background: #e046ba;
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out both;
+      }
+
+      .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+      .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+      @keyframes typingBounce {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+      }
+
+      .input-bar {
+        padding: 24px 32px;
+        background: rgba(33, 37, 56, 0.5);
+        border-top: 1px solid rgba(224, 70, 186, 0.1);
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .chat-textarea {
+        flex: 1;
+        background: rgba(13, 15, 23, 0.6);
+        border: 1px solid rgba(224, 70, 186, 0.2);
+        border-radius: 14px;
+        padding: 14px 20px;
+        color: #fff;
+        font-family: inherit;
+        font-size: 15px;
+        resize: none;
+        outline: none;
+        transition: all 0.3s ease;
+        height: 52px;
+        line-height: 22px;
+        overflow-y: hidden;
+      }
+
+      .chat-textarea:focus {
+        border-color: #e046ba;
+        box-shadow: 0 0 15px rgba(224, 70, 186, 0.15);
+      }
+
+      .send-button {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #e046ba 0%, #792b9d 100%);
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(224, 70, 186, 0.2);
+      }
+
+      .send-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(224, 70, 186, 0.4);
+      }
+
+      .send-button:active {
+        transform: translateY(0);
+      }
+
+      .send-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* Formatting inside bubbles */
+      .message-bubble strong {
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .message-bubble code {
+        font-family: 'JetBrains Mono', monospace;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #e046ba;
+        border: 1px solid rgba(224, 70, 186, 0.15);
+      }
+
+      .message-bubble li {
+        margin-left: 20px;
+        list-style-type: square;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <div class="logo" onclick="window.location.href = '/'" style="cursor: pointer; gap: 0">
+          <svg class="brand-v-nav" viewBox="10 0 70 100" style="width: 40px; height: 40px">
+            <defs>
+              <linearGradient id="v-nav-left-login" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color: #9a277d"></stop>
+                <stop offset="100%" style="stop-color: #792b9d"></stop>
+              </linearGradient>
+              <linearGradient id="v-nav-right-login" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color: #e046ba"></stop>
+                <stop offset="100%" style="stop-color: #b347e6"></stop>
+              </linearGradient>
+            </defs>
+            <path d="M25,25 L50,80" stroke="url(#v-nav-left-login)" stroke-width="20" stroke-linecap="round" fill="none"></path>
+            <path d="M50,80 L75,25" stroke="url(#v-nav-right-login)" stroke-width="20" stroke-linecap="round" fill="none"></path>
+          </svg><span class="brand-v-icon">IREX</span>
+        </div>
+
+        <ul class="nav-menu">
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/#security">Security</a></li>
+          <li><a href="/rag-analyst" class="active">Security AI</a></li>
+          <li><a href="/support">Contact Us</a></li>
+        </ul>
+
+        <div class="nav-buttons">
+          <button
+            class="btn-icon"
+            id="theme-toggle"
+            title="Toggle Light/Dark Mode"
+          >
+            <i class="fas fa-sun"></i>
+          </button>
+          <a href="/login" class="btn-login-nav">Login</a>
+          <button class="btn-signup-nav" onclick="window.location.href = '/signup'">
+            Sign up
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Chat Area -->
+    <div class="chat-wrapper">
+      <div class="chat-container">
+        <div class="chat-header-custom">
+          <div class="ai-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="header-info">
+            <h2>Virex Security RAG Analyst</h2>
+            <p>AI assistant specializing in cyber attacks, vulnerabilities, and WAF rules.</p>
+          </div>
+        </div>
+
+        <div class="messages-box" id="messages-box">
+          <!-- Initial bot welcome -->
+          <div class="message-row bot-row">
+            <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="message-bubble">
+              Hello! I am the <strong>Virex Security RAG System</strong>. I have been specifically trained to address cybersecurity inquiries, cyber attacks, signature bypasses, and security compliance. How can I help you today?
+            </div>
+          </div>
+        </div>
+
+        <div class="input-bar">
+          <textarea 
+            class="chat-textarea" 
+            id="chat-input" 
+            placeholder="Ask about attacks, SQLi, XSS, signature bypasses..." 
+            rows="1"
+          ></textarea>
+          <button class="send-button" id="send-btn">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Logic -->
+    <script>
+      const chatInput = document.getElementById('chat-input');
+      const sendBtn = document.getElementById('send-btn');
+      const messagesBox = document.getElementById('messages-box');
+
+      // Auto-resize textarea
+      chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+
+      // Submit on enter
+      chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      sendBtn.addEventListener('click', sendMessage);
+
+      function formatResponseText(text) {
+        return text
+          .replace(/\n/g, "<br>")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/`(.*?)`/g, "<code>$1</code>")
+          .replace(/- (.*?)(<br>|$)/g, "<li>$1</li>");
+      }
+
+      async function sendMessage() {
+        const question = chatInput.value.trim();
+        if (!question) return;
+
+        // Add user message to DOM
+        appendMessage(question, 'user');
+        chatInput.value = '';
+        chatInput.style.height = '52px';
+
+        // Add typing indicator
+        const typingId = showTypingIndicator();
+
+        try {
+          const response = await fetch('/api/rag/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question })
+          });
+
+          removeTypingIndicator(typingId);
+
+          if (response.ok) {
+            const data = await response.json();
+            appendMessage(data.answer, 'bot');
+          } else {
+            const errData = await response.json().catch(() => ({}));
+            appendMessage(errData.error || 'Failed to connect to the RAG service.', 'bot');
+          }
+        } catch (error) {
+          removeTypingIndicator(typingId);
+          console.error('RAG request error:', error);
+          appendMessage('Could not reach the security agent. Please try again.', 'bot');
+        }
+      }
+
+      function appendMessage(text, sender) {
+        const row = document.createElement('div');
+        row.className = `message-row ${sender}-row`;
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.innerHTML = sender === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerHTML = formatResponseText(text);
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messagesBox.appendChild(row);
+
+        // Scroll to bottom
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const id = 'typing-' + Date.now();
+        const indicator = document.createElement('div');
+        indicator.className = 'typing-bubble';
+        indicator.id = id;
+        indicator.innerHTML = `
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        `;
+        messagesBox.appendChild(indicator);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+        return id;
+      }
+
+      function removeTypingIndicator(id) {
+        const indicator = document.getElementById(id);
+        if (indicator) {
+          indicator.remove();
+        }
+      }
+    </script>
+  </body>
+</html>

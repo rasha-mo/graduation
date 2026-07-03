@@ -73,6 +73,10 @@ def create_api_app():
     allowed_origins_list = [o.strip() for o in allowed_origins.split(",") if o.strip()]
     CORS(app, resources={r"/api/*": {"origins": allowed_origins_list}}, supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
+    # Register RAG Blueprint
+    from app.controllers.rag_controller import rag_bp
+    app.register_blueprint(rag_bp, url_prefix='/api/rag')
+
     security = SimpleSecurityManager()
 
     # ── Brute force tracker (+ persistent blocked_ips) ────────
@@ -117,7 +121,7 @@ def create_api_app():
         "/ml-performance", "/threats", "/login", "/signup", "/logout",
         "/forbidden", "/privacy", "/terms", "/docs", "/support",
         "/attack-history", "/threats-overview", "/user-manager", "/settings",
-        "/notifications", "/pricing", "/payment", "/blacklist", "/api/"
+        "/notifications", "/pricing", "/payment", "/blacklist", "/api/", "/api/rag"
     )
 
     @app.before_request

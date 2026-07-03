@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../utils/useAuth';
 import API from '../api/client';
+import { ragService } from '../api/ragService';
 
 // ---------------------------------------------------------------------------
 // Typing indicator — unchanged from original
@@ -143,18 +144,14 @@ export default memo(function Chatbot() {
         content: m.text,
       }));
 
-      // Make API request to Dobby backend
-      const res = await API.post('/chat', {
-        message: userText,
-        history: hist,
-        page_context: window.location.pathname,
-      });
+      // Make API request to Dobby backend using our new MVC RAG service
+      const answer = await ragService.askQuestion(userText);
 
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
-          text: res.response || 'No response received.',
+          text: answer || 'No response received.',
           sender: 'bot',
           timestamp: new Date(),
         },
