@@ -4,7 +4,10 @@ Dashboard Routes - Flask application and route handlers for SIEM Dashboard
 from functools import wraps
 import os
 import hmac
-from venv import logger
+import logging
+
+logger = logging.getLogger(__name__)
+
 # pyrefly: ignore [missing-import]
 from werkzeug.utils import secure_filename
 
@@ -87,7 +90,7 @@ def create_dashboard_app():
             "action": action,
             "details": details
         }
-        print(f"[AUDIT] {log_entry}")
+        logger.info(f"[AUDIT] {log_entry}")
         dashboard.write_audit_log(log_entry)
     # ----------------------------------------------------------
     # TRAFFIC LOGGER - intercepts every request automatically
@@ -1279,7 +1282,7 @@ def create_dashboard_app():
         history = data.get('history', [])
         if not message:
             return jsonify({'error': 'Message required'}), 400
-        print(f"[NLP] Chat request from {current_user['username']} ({current_user['role']}): {message}")
+        logger.info(f"[NLP] Chat request from {current_user['username']} ({current_user['role']}): {message}")
         response_text = security_bot.generate_response(message, incident_id, page_context, history, role=current_user['role'], username=current_user['username'])
         return jsonify({
             'response': response_text,

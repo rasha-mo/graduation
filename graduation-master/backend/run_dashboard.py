@@ -2,6 +2,20 @@
 Dashboard Entry Point — Virex SIEM Dashboard
 """
 import os
+import sys
+
+# Reconfigure stdout and stderr to UTF-8 to prevent UnicodeEncodeError on Windows
+if sys.stdout.encoding != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+if sys.stderr.encoding != 'utf-8':
+    try:
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+
 import logging
 from dotenv import load_dotenv
 
