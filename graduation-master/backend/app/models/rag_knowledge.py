@@ -11,9 +11,9 @@ SECURITY_KEYWORDS = [
     'xss', 'csrf', 'buffer', 'overflow', 'malware', 'phishing', 'dos', 'ddos', 
     'payload', 'breach', 'auth', 'cyber', 'virus', 'traversal', 'deserialization',
     'sqli', 'sql', 'hi', 'hello', 'hey', 'greetings', 'clear', 'reset', 'waf', 'siem',
-    'brute', 'force', 'scanner', 'scanning', 'nmap', 'nikto', 'sqlmap', 'wpscan',
-    'rate', 'limit', 'limiting', 'ssrf', 'path', 'directory', 'command', 'exec', 'execute',
-    'session', 'broken', 'jwt', 'cookie', 'same site', 'token',
+    'brute', 'force', 'scanner', 'scanners', 'scanning', 'nmap', 'nikto', 'sqlmap', 'wpscan',
+    'rate', 'limit', 'limiting', 'rate limited', 'rate limiting', 'ssrf', 'path', 'directory', 'command', 'exec', 'execute',
+    'session', 'broken', 'jwt', 'cookie', 'same site', 'token', 'bug', 'bugs', 'flaw', 'flaws',
     'ثغرة', 'ثغرات', 'هجوم', 'هجمات', 'حقن', 'اختراق', 'تحديد', 'معدل', 'طلبات', 'قوة', 
     'غاشمة', 'تخمين', 'سيرفر', 'مجلد', 'مسار', 'مصادقة', 'حماية', 'تزوير', 'أمن', 'أمني', 'أمنية'
 ]
@@ -23,12 +23,12 @@ KNOWLEDGE_BASE = [
     # --- 1. General Vulnerabilities ---
     {
         "title": "Vulnerabilities & Lifecycle (English)",
-        "content": "A vulnerability is a weakness in system, app, or network exploited to gain unauthorized access, leak data, or execute code. Lifecycle: Discovery, Disclosure (Responsible/Full), Classification (CVE, CWE, CVSS score 0-10, OWASP Top 10), Exploitation (PoC), Patching, Zero-Day. Essential WAF concepts: False Positive, False Negative, Signature-based, Anomaly-based (ML), Defense in depth, Least Privilege.",
+        "content": "A vulnerability (often called a bug, security bug, or flaw) is a weakness in system, app, or network exploited to gain unauthorized access, leak data, or execute code. Lifecycle: Discovery, Disclosure (Responsible/Full), Classification (CVE, CWE, CVSS score 0-10, OWASP Top 10), Exploitation (PoC), Patching, Zero-Day. Essential WAF concepts: False Positive, False Negative, Signature-based, Anomaly-based (ML), Defense in depth, Least Privilege.",
         "type": "General Security"
     },
     {
         "title": "الثغرات الأمنية ودورة حياتها (Arabic)",
-        "content": "الثغرة الأمنية هي ضعف في نظام أو تطبيق يمكن المهاجم من الوصول غير المصرح به أو تسريب بيانات. دورة حياتها: الاكتشاف، الإفصاح، التصنيف (CVE, CWE, CVSS من 0 إلى 10، OWASP Top 10)، الاستغلال (PoC)، الإصلاح (Patching)، وثغرات اليوم الصفر (Zero-Day). مفاهيم WAF أساسية: False Positive، False Negative، كشف بالبصمة (Signature)، كشف بالانحراف (ML)، الدفاع المعمق، وأقل الصلاحيات.",
+        "content": "الثغرة الأمنية (أو الـ bug / الثغرة البرمجية أو الثغرات) هي ضعف في نظام أو تطبيق يمكن المهاجم من الوصول غير المصرح به أو تسريب بيانات. دورة حياتها: الاكتشاف، الإفصاح، التصنيف (CVE, CWE, CVSS من 0 إلى 10، OWASP Top 10)، الاستغلال (PoC)، الإصلاح (Patching)، وثغرات اليوم الصفر (Zero-Day). مفاهيم WAF أساسية: False Positive، False Negative، كشف بالبصمة (Signature)، كشف بالانحراف (ML)، الدفاع المعمق، وأقل الصلاحيات.",
         "type": "General Security"
     },
     
@@ -47,7 +47,7 @@ KNOWLEDGE_BASE = [
     # --- 3. Cross-Site Scripting (XSS) ---
     {
         "title": "Cross-Site Scripting (XSS) (English)",
-        "content": "XSS (CWE-79, CVSS 5.0-8.8) allows injecting malicious scripts (JS/HTML) into web pages viewed by others. Types: Stored/Persistent (saved in DB), Reflected (reflected in response, requires user action), DOM-based (client-side DOM manipulation). Payloads: <script>, img/svg onload/onerror, iframe. Mitigations: Output encoding/escaping, Content Security Policy (CSP), HttpOnly flags on cookies, React/Vue auto-escaping, DOMPurify sanitization.",
+        "content": "XSS (CWE-79, CVSS 5.0-8.8) allows injecting malicious scripts (JS/HTML) into web pages viewed by others. Types: Stored/Persistent (saved in DB), Reflected (reflected in response, requires user action), DOM-based (client-side DOM manipulation). Payloads: `<script>`, `<img>`, `<iframe>`. Mitigations: Output encoding/escaping, Content Security Policy (CSP), HttpOnly flags on cookies, React/Vue auto-escaping, DOMPurify sanitization.",
         "type": "Attack"
     },
     {

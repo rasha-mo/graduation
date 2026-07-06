@@ -2,6 +2,7 @@
 Virex AI Assistant — Conversation Memory Service
 """
 import re
+import time
 import logging
 from collections import deque
 
@@ -10,32 +11,78 @@ logger = logging.getLogger(__name__)
 class ConversationMemory:
     def __init__(self, max_history=20):
         self.max_history = max_history
-        # Store user-specific context: username -> {history: deque, entities: dict, lang: str}
+        # Store user-specific context: username -> session dict
         self.sessions = {}
 
+    def _create_empty_session(self) -> dict:
+        return {
+            "history": deque(maxlen=self.max_history),
+            "last_intent": None,
+            "last_vulnerability": None,
+            "last_incident_id": None,
+            "last_payload": None,
+            "last_ip": None,
+            "last_endpoint": None,
+            "last_uploaded_code": None,
+            "last_language": "en",
+            "last_response": None,
+            "last_security_topic": None,
+            "preferred_language": "en",
+            "last_activity_timestamp": time.time()
+        }
+
     def get_session(self, username: str) -> dict:
-        if username not in self.sessions:
-            self.sessions[username] = {
-                "history": deque(maxlen=self.max_history),
-                "last_vulnerability": None,
-                "last_incident_id": None,
-                "last_ip": None,
-                "last_payload": None,
-                "preferred_language": "en"
-            }
+        now = time.time()
+        if username in self.sessions:
+            session = self.sessions[username]
+            # Session inactivity check (30 minutes = 1800 seconds)
+            if now - session.get("last_activity_timestamp", now) > 1800:
+                self.sessions[username] = self._create_empty_session()
+                logger.info(f"[MEMORY] Session for user '{username}' expired due to 30 minutes of inactivity.")
+        else:
+            self.sessions[username] = self._create_empty_session()
+        
+        self.sessions[username]["last_activity_timestamp"] = now
         return self.sessions[username]
 
     def add_message(self, username: str, role: str, content: str):
         session = self.get_session(username)
         session["history"].append({"role": role, "content": content})
+        session["last_activity_timestamp"] = time.time()
         
-        # Auto-detect language and update preference
         if role == "user":
-            has_arabic = any('\u0600' <= char <= '\u06FF' for char in content)
-            session["preferred_language"] = "ar" if has_arabic else "en"
+            cleaned = content.strip().lower()
+            cleaned_normalized = re.sub(r"[أإآ]", "ا", cleaned)
+            cleaned_normalized = re.sub(r"[?.,!؛؟]", "", cleaned_normalized)
             
-            # Extract basic entities on the fly
+            pure_attack_terms = {
+                "sql", "sqli", "xss", "csrf", "xsrf", "ssrf", "idor", "xxe", 
+                "rce", "lfi", "rfi", "ssti", "brute force", "brute", "rate limit", 
+                "rate_limit", "rate limited", "rate limiting", "scanner", "scanners", 
+                "scanning", "attacks", "threats", "vulnerabilities"
+            }
+            
+            bug_keywords = [
+                "bug", "bugs", "vulnerability", "vulnerabilities", "exploit", "exploits",
+                "flaw", "flaws", "weakness", "weaknesses",
+                "ثغرة", "ثغرات", "ثغره", "ثغراتها", "نقطة ضعف", "نقاط ضعف"
+            ]
+            
+            has_arabic = any('\u0600' <= char <= '\u06FF' for char in content)
+            
+            contains_bug_keyword = any(re.search(rf"\b{re.escape(kw)}\b", cleaned_normalized) for kw in bug_keywords)
+            
+            if cleaned_normalized in pure_attack_terms or contains_bug_keyword:
+                session["last_language"] = "both"
+            elif has_arabic:
+                session["last_language"] = "ar"
+            else:
+                session["last_language"] = "en"
+                
+            session["preferred_language"] = session["last_language"]
             self.extract_entities(session, content)
+        else:
+            session["last_response"] = content
 
     def extract_entities(self, session: dict, text: str):
         # Extract IP Addresses
@@ -50,7 +97,7 @@ class ConversationMemory:
 
         # Extract vulnerability keywords
         vuln_patterns = {
-            "sql_injection": [r"sqli", r"sql", r"injection", r"قواعد البيانات"],
+            "sql_injection": [r"sqli", r"sql", r"injection", r"قواعد البيانات", r"حقن"],
             "xss": [r"xss", r"cross site scripting", r"cross-site scripting", r"سكريبت"],
             "csrf": [r"csrf", r"xsrf", r"forgery", r"تزوير الطلبات"],
             "ssrf": [r"ssrf", r"server side", r"server-side"],
@@ -62,7 +109,15 @@ class ConversationMemory:
         for vuln, patterns in vuln_patterns.items():
             if any(re.search(p, text, re.IGNORECASE) for p in patterns):
                 session["last_vulnerability"] = vuln
+                session["last_security_topic"] = vuln.replace("_", " ").upper()
                 break
+
+        # Check for code markers (Uploaded Code)
+        has_code_markers = any(m in text for m in [
+            "def ", "function", "var ", "const ", "let ", "import ", "require("
+        ])
+        if has_code_markers:
+            session["last_uploaded_code"] = text
 
     def get_history(self, username: str) -> list:
         session = self.get_session(username)
@@ -73,17 +128,15 @@ class ConversationMemory:
         cleaned = query.lower()
 
         # Check for English pronoun indicators
-        en_pronouns = ["it", "them", "this vulnerability", "that", "how do i fix it", "explain it"]
+        en_pronouns = ["it", "that", "this vulnerability"]
         # Check for Arabic pronoun indicators
-        ar_pronouns = ["دي", "الثغرة دي", "حلها", "دي بتشتغل ازاي", "اشرحها", "مثال عليها"]
+        ar_pronouns = ["اشرحها", "حلها", "علاجها", "مثال عليها"]
 
-        needs_resolve = (
-            any(p in cleaned for p in en_pronouns) or
-            any(p in cleaned for p in ar_pronouns) or
-            len(cleaned.split()) < 4 # Short follow-up query like "explain more" or "give me an example"
-        )
+        # Only resolve pronouns if query contains explicit pronoun indicators AND previous topic/vulnerability exists
+        has_pronoun = any(p in cleaned for p in en_pronouns) or any(p in cleaned for p in ar_pronouns)
+        has_previous_topic = bool(session.get("last_security_topic") or session.get("last_vulnerability"))
 
-        if needs_resolve and session["last_vulnerability"]:
+        if has_pronoun and has_previous_topic:
             vuln_names = {
                 "sql_injection": "SQL Injection",
                 "xss": "XSS (Cross-Site Scripting)",
@@ -93,9 +146,10 @@ class ConversationMemory:
                 "path_traversal": "Path Traversal",
                 "command_injection": "Command OS Injection"
             }
-            mapped_name = vuln_names.get(session["last_vulnerability"], "")
+            last_vuln = session.get("last_vulnerability") or "sql_injection"
+            mapped_name = vuln_names.get(last_vuln, last_vuln.replace("_", " ").upper())
             if mapped_name:
-                if session["preferred_language"] == "ar":
+                if session.get("preferred_language") == "ar":
                     resolved = f"{query} (المشار إليها: ثغرة {mapped_name})"
                 else:
                     resolved = f"{query} (referring to: {mapped_name})"

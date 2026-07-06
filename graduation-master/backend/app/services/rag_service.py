@@ -58,18 +58,53 @@ class SecurityRAGService:
         query_lower = query.lower()
         return any(keyword in query_lower for keyword in SECURITY_KEYWORDS)
 
-    def retrieve(self, query, top_k=2):
-        """Retrieve the most relevant context from the knowledge base."""
+    def retrieve(self, query, top_k=3):
+        """Retrieve the most relevant context from the knowledge base with keyword boosting."""
         query_embedding = self.embedder.encode([query])
-        similarities = cosine_similarity(query_embedding, self.document_embeddings)[0]
+        similarities = cosine_similarity(query_embedding, self.document_embeddings)[0].copy()
+        query_lower = query.lower()
         
-        top_indices = np.argsort(similarities)[::-1][:top_k]
+        # concept group mapping to specific document indices in KNOWLEDGE_BASE
+        concept_groups = [
+            (["bug", "bugs", "vulnerabilit", "flaw", "weakness", "ثغرة", "ثغرات", "ثغره"], [0, 1]),
+            (["sql", "sqli", "injection", "حقن"], [2, 3]),
+            (["xss", "cross-site", "cross site", "scripting", "سكريبت"], [4, 5]),
+            (["brute", "force", "guessing", "تخمين", "قوة غاشمة"], [6, 7]),
+            (["scanner", "scanners", "scanning", "فحص", "استطلاع"], [8, 9]),
+            (["rate limit", "rate limiting", "rate limited", "rate-limiting", "معدل", "طلبات", "تحديد"], [10, 11]),
+            (["csrf", "xsrf", "تزوير"], [12, 13]),
+            (["ssrf", "خادم", "سيرفر"], [14, 15]),
+            (["path", "traversal", "directory", "مسار", "مجلد"], [16, 17]),
+            (["command", "exec", "rce", "اوامر"], [18, 19]),
+            (["auth", "login", "session", "jwt", "cookie", "مصادقة", "جلسة"], [20, 21])
+        ]
         
-        if similarities[top_indices[0]] < 0.2:
-            return None
+        for kws, indices in concept_groups:
+            if any(kw in query_lower for kw in kws):
+                for idx in indices:
+                    similarities[idx] += 2.0
+                            
+        # Sort indices by similarity descending
+        sorted_indices = np.argsort(similarities)[::-1]
+        
+        # Enforce strict 0.45 similarity threshold
+        valid_indices = [i for i in sorted_indices if similarities[i] >= 0.45]
+        
+        if not valid_indices:
+            return "", 0.0
             
-        retrieved_docs = [self.document_texts[i] for i in top_indices]
-        return " | ".join(retrieved_docs)
+        top_indices = valid_indices[:top_k]
+        max_similarity = float(similarities[top_indices[0]])
+        
+        retrieved_docs = []
+        seen = set()
+        for idx in top_indices:
+            doc_text = self.document_texts[idx]
+            if doc_text not in seen:
+                seen.add(doc_text)
+                retrieved_docs.append(doc_text)
+                
+        return "\n\n".join(retrieved_docs), max_similarity
 
     def generate_response(self, query):
         """Generates an answer to the query using the unified WAF AI co-pilot pipeline."""

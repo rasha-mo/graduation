@@ -42,36 +42,39 @@ INTENT_TRIGGERS = {
         "system health", "network status", "security status",
         "show stats", "give me stats", "stats", "summary", "report",
         "الوضع ايه", "ايه الوضع", "احصائيات", "تقرير", "الحالة ايه",
-        "حالة النظام", "اخبار النظام", "ايه الاخبار"
+        "حالة النظام", "اخبار النظام", "ايه الاخبار", "احصائيات الهجمات"
     ],
-    "top_attacker": [
-        "top attacker", "top ip", "worst ip", "most active attacker",
-        "most dangerous ip", "who is attacking us", "which ip is attacking",
-        "اعلى مهاجم", "اكتر ip بيحاول يخترق", "المهاجم الرئيسي"
-    ],
-    "recent_threats": [
-        "recent threats", "recent attacks", "what happened recently",
-        "latest incidents", "latest logs", "recent blocked requests",
-        "اخر الهجمات", "الهجمات الاخيرة", "الحوادث الاخيرة"
+    "attack_stats": [
+        "how many", "count", "number of", "statistics", "how many sql",
+        "how many xss", "how many brute", "how many scanner", "how many attacks",
+        "كم عدد", "عدد هجمات", "كام", "كم هجمة", "كم عدد هجمات"
     ],
     "payload_analysis": [
         "analyze", "payload", "decode", "explain log", "malicious payload",
         "what is this query", "explain request",
-        "حلل", "افحص البيلود", "فك التشفير", "تحليل الكود"
+        "حلل", "افحص البيلود", "فك التشفير", "تحليل الكود", "حلل هذا الـ payload"
     ],
     "incident_query": [
         "incident", "why was it blocked", "investigate", "tell me about this incident",
         "why block", "incident details", "why did virex block this",
         "الحادثة", "ليه اتحجبت", "سبب الحظر", "تفاصيل الحادثة"
     ],
-    "code_review": [
-        "code review", "review code", "check code", "is this safe", "vulnerable code",
-        "مراجعة الكود", "فحص الكود", "هل الكود امن"
+    "security_definition": [
+        "what is", "explain", "how does it work", "tell me about",
+        "ما هو", "اشرح", "كيف يعمل", "شرح"
     ],
     "mitigation_advice": [
         "how to fix", "how to prevent", "secure code example", "mitigate", "remediate",
         "prevent", "fix", "secure implementation", "how do i stop",
         "كيفية الاصلاح", "طريقة العلاج", "مثال برمجي امن", "كيف امنع"
+    ],
+    "out_of_scope": [
+        "pizza", "recipe", "cook", "food", "poem", "poetry", "write a poem",
+        "calculate", "math", "calculator", "football", "soccer", "player", "best player",
+        "weather", "music", "song", "movie", "film", "joke", "tell me a joke",
+        "بيتزا", "وصفة", "طبخ", "شعر", "قصيدة", "اكتب شعر", "احسب", "رياضيات", "حساب",
+        "كرة قدم", "كورة", "لاعب", "افضل لاعب", "طقس", "موسيقى", "اغنية", "فيلم", "نكتة",
+        "لاعب كرة", "من أفضل لاعب", "اكتب قصيدة", "احسب 2+2"
     ]
 }
 
@@ -81,19 +84,38 @@ CYBER_SYNONYMS = {
     "ssrf": ["server side request forgery", "server-side request forgery", "metadata query", "file://", "تزوير الطلبات من جهة الخادم"],
     "csrf": ["cross site request forgery", "cross-site request forgery", "xsrf", "missing csrf", "تزوير الطلبات عبر المواقع"],
     "brute": ["brute force", "login guessing", "repeated logins", "password attack", "تخمين كلمة المرور"],
-    "scanner": ["nikto", "nmap", "gobuster", "sqlmap", "reconnaissance", "scanning", "فحص الثغرات"],
-    "rate_limit": ["rate limiting", "ddos", "dos", "too many requests", "sliding window", "تحديد معدل الطلبات"]
+    "scanner": ["nikto", "nmap", "gobuster", "sqlmap", "reconnaissance", "scanning", "scanners", "scanner", "فحص الثغرات"],
+    "rate_limit": ["rate limiting", "rate limited", "rate limit", "rate-limiting", "rate-limited", "ddos", "dos", "too many requests", "sliding window", "تحديد معدل الطلبات"]
 }
 
 SECURITY_TRIGGERS = [
-    "explain", "what is", "how to prevent", "mitigate", "remediate", "cwe", "owasp", "cve",
-    "secure coding", "how does it work", "vulnerability", "threat", "attack",
-    "ثغرة", "كيف يعمل", "شرح", "كيفية الوقاية", "علاج", "حقن", "تخطي"
+    "sql injection", "sqli", "xss", "cross site scripting", "cross-site scripting",
+    "csrf", "xsrf", "ssrf", "rce", "remote code execution", "command injection",
+    "directory traversal", "path traversal", "file upload", "idor", "xxe",
+    "deserialization", "buffer overflow", "brute force", "rate limit",
+    "authentication", "authorization", "jwt", "oauth", "session hijacking",
+    "cookie", "cwe", "owasp", "cve", "mitre", "waf", "siem", "payload",
+    "malware", "ransomware", "trojan", "worm", "backdoor", "vulnerability",
+    "exploit", "penetration testing", "secure coding", "injection",
+    "حقن", "ثغرة", "تخطي المصادقة", "اختراق", "تصيد", "برمجية خبيثة", "فدية",
+    "تخمين كلمة المرور", "تحديد معدل الطلبات", "مصادقة", "تفويض", "جلسة",
+    "lfi", "rfi", "ssti", "ldap injection", "xpath injection",
+    "os command injection", "clickjacking", "cors", "csp",
+    "http security headers", "security headers", "jwt attack", "oauth attack",
+    "broken authentication", "broken access control", "insecure deserialization",
+    "csrf token", "api security", "graphql", "websocket", "directory listing",
+    "robots.txt", "subdomain takeover",
+    "stored xss", "reflected xss", "blind sqli", "boolean based", "time based",
+    "union based", "csrf attack", "ssrf attack", "lfi attack", "rfi attack",
+    "scanner", "scanners", "scanning", "rate limited", "rate limiting",
+    "bug", "bugs", "flaw", "flaws", "weakness", "weaknesses", "ثغرات", "ثغره"
 ]
 
 FOLLOW_UP_TRIGGERS = [
-    "why", "how", "show example", "explain more", "give me an example", "compare", "which is worse",
-    "ليه", "ازاي", "اعطيني مثال", "اشرح اكتر", "مقارنة"
+    "why", "how", "how so", "can you explain", "continue", "tell me more",
+    "compare", "show example", "what about", "and then", "then", "what next",
+    "ليه", "ازاي", "طب ليه", "كمل", "اشرح اكتر", "ممكن مثال", "قارن",
+    "بعد كده", "طيب وبعدها", "وبعدين", "كمان", "ايه كمان"
 ]
 
 class IntentEngine:
@@ -104,55 +126,110 @@ class IntentEngine:
         if not text:
             return ""
         text = text.strip().lower()
+        # Normalize Arabic Alifs (أ, إ, آ -> ا)
+        text = re.sub(r"[أإآ]", "ا", text)
         text = re.sub(r"[?.,!؛؟]", "", text)
+        # Strip Arabic definite article "ال" from start of words
+        text = re.sub(r"\bال([أإآا-ي])", r"\1", text)
         return text
 
-    def calculate_overlap(self, text: str, triggers: list) -> float:
-        text_words = set(text.split())
-        if not text_words:
+    def calculate_token_overlap(self, query: str, trigger: str) -> float:
+        query_words = set(query.split())
+        trigger_words = set(trigger.split())
+        if not query_words or not trigger_words:
             return 0.0
-        max_score = 0.0
-        for trigger in triggers:
-            trigger_words = set(trigger.split())
-            if not trigger_words:
-                continue
-            intersection = text_words.intersection(trigger_words)
-            # Soft Jaccard index: penalize matches in long texts unless trigger matches most of it
-            score = len(intersection) / (len(trigger_words) + 0.3 * (len(text_words) - len(intersection)))
-            if score > max_score:
-                max_score = score
-        return max_score
+        intersection = query_words.intersection(trigger_words)
+        union = query_words.union(trigger_words)
+        return len(intersection) / len(union)
 
-    def fuzzy_match(self, text: str, triggers: list) -> float:
-        max_score = 0.0
-        for trigger in triggers:
-            ratio = difflib.SequenceMatcher(None, text, trigger).ratio()
-            if ratio > max_score:
-                max_score = ratio
-        return max_score
+    def is_substring_match(self, query: str, trigger: str) -> bool:
+        """
+        Whole-word / whole-phrase match with boundary checks, so that a short
+        trigger like 'sql' does not incorrectly match inside a longer word
+        like 'mysql'.
+        """
+        if trigger in query:
+            idx = query.find(trigger)
+            left_ok = (idx == 0 or query[idx-1].isspace() or query[idx-1] in ".,!?;:؛؟")
+            right_ok = (idx + len(trigger) == len(query) or query[idx+len(trigger)].isspace() or query[idx+len(trigger)] in ".,!?;:؛؟")
+            return left_ok and right_ok
+        return False
+
+    def calculate_fuzzy_match(self, query: str, trigger: str) -> float:
+        return difflib.SequenceMatcher(None, query, trigger).ratio()
+
+    def score_phrase(self, query: str, trigger: str) -> float:
+        exact_score = 1.0 if query == trigger else 0.0
+        whole_word_score = 1.0 if self.is_substring_match(query, trigger) else 0.0
+        token_overlap = self.calculate_token_overlap(query, trigger)
+        fuzzy_score = self.calculate_fuzzy_match(query, trigger)
+
+        # Base weighted score: Exact (0.6) + Whole Word (0.2) + Token Overlap (0.1) + Fuzzy (0.1)
+        score = (exact_score * 0.6) + (whole_word_score * 0.2) + (token_overlap * 0.1) + (fuzzy_score * 0.1)
+
+        if exact_score > 0:
+            return 1.0
+        return score
 
     def expand_synonyms(self, text: str) -> str:
-        expanded = text
+        expanded_tokens = [text]
         for standard, aliases in CYBER_SYNONYMS.items():
+            if self.is_substring_match(text, standard):
+                expanded_tokens.extend(aliases)
             for alias in aliases:
-                if alias in text:
-                    expanded += f" {standard}"
-        return expanded
+                if self.is_substring_match(text, alias):
+                    expanded_tokens.append(standard)
+        return " ".join(expanded_tokens)
 
     def classify(self, raw_query: str) -> dict:
+        # 1. Code review detection (Must be checked first to support multiline coding inputs)
+        raw_lower = raw_query.lower()
+        has_code_markers = any(m in raw_lower for m in [
+            "def ", "function", "var ", "const ", "let ", "import ", "require(",
+            "class ", "select ", "insert ", "<?php", "include", "eval(",
+            "public class", "using", "#include", "system.out", "printf(",
+            "console.log(", "select *", "update", "delete from", "drop table"
+        ])
+        if has_code_markers and len(raw_query.splitlines()) >= 2:
+            return {"intent": "code_review", "confidence": 0.90}
+
         cleaned = self.clean_text(raw_query)
         if not cleaned:
             return {"intent": "unknown", "confidence": 0.0}
 
         expanded = self.expand_synonyms(cleaned)
-        
+
+        is_out_of_scope_word = any(word in cleaned for word in [
+            "pizza", "recipe", "cook", "food", "poem", "poetry", "calculate", "math",
+            "calculator", "football", "soccer", "player", "weather", "music", "song",
+            "movie", "film", "joke", "بيتزا", "وصفة", "طبخ", "شعر", "قصيدة", "احسب",
+            "رياضيات", "حساب", "كرة قدم", "كورة", "لاعب", "افضل لاعب", "طقس",
+            "موسيقى", "اغنية", "فيلم", "نكتة"
+        ])
+
         # Calculate intent scores
         scores = {}
         for intent, triggers in INTENT_TRIGGERS.items():
-            overlap = self.calculate_overlap(expanded, triggers)
-            fuzzy = self.fuzzy_match(cleaned, triggers)
-            # Combined score weight
-            scores[intent] = (overlap * 0.7) + (fuzzy * 0.3)
+            max_phrase_score = 0.0
+            for trigger in triggers:
+                phrase_score = self.score_phrase(expanded, trigger)
+                if phrase_score > max_phrase_score:
+                    max_phrase_score = phrase_score
+
+            # Apply Keyword Boost
+            boost = 0.0
+            if intent == "out_of_scope" and is_out_of_scope_word:
+                boost = 0.15
+            elif intent == "security_definition" and any(self.is_substring_match(expanded, word) for word in SECURITY_TRIGGERS):
+                boost = 0.15
+            elif intent == "mitigation_advice" and any(self.is_substring_match(expanded, word) for word in SECURITY_TRIGGERS):
+                boost = 0.15
+            elif intent == "attack_stats" and (any(self.is_substring_match(expanded, word) for word in ["how many", "count", "كم عدد", "كم هجمة"]) or re.search(r"\bكم\b", expanded)):
+                boost = 0.15
+            elif intent == "system_status" and any(self.is_substring_match(expanded, word) for word in ["stats", "status", "health", "dashboard", "احصائيات", "تقرير"]):
+                boost = 0.15
+
+            scores[intent] = min(max_phrase_score + boost, 1.0)
 
         # Find highest scoring intent
         best_intent = "unknown"
@@ -162,33 +239,35 @@ class IntentEngine:
                 best_score = score
                 best_intent = intent
 
-        # Heuristics for special types of intent
-        # 1. Follow-up detection
-        if best_score < 0.4:
-            is_follow_up = any(word in cleaned for word in FOLLOW_UP_TRIGGERS)
+        if is_out_of_scope_word:
+            is_security_q = any(self.is_substring_match(expanded, word) for word in SECURITY_TRIGGERS)
+            is_cyber_synonym = any(any(self.is_substring_match(expanded, alias) for alias in aliases) for aliases in CYBER_SYNONYMS.values())
+            if not (is_security_q or is_cyber_synonym):
+                return {"intent": "out_of_scope", "confidence": 0.95}
+
+        # Threshold check
+        if best_score < 0.75:
+            # Fall back to heuristics
+
+            is_stats_word = any(self.is_substring_match(expanded, word) for word in ["stats", "status", "overview", "dashboard", "احصائيات", "تقرير", "الوضع", "كم عدد", "عدد هجمات", "كام", "كم هجمة"]) or re.search(r"\bكم\b", expanded)
+            if is_stats_word:
+                is_cyber_synonym = any(any(self.is_substring_match(expanded, alias) for alias in aliases) for aliases in CYBER_SYNONYMS.values())
+                if is_cyber_synonym:
+                    return {"intent": "attack_stats", "confidence": 0.85}
+                return {"intent": "system_status", "confidence": 0.85}
+
+            is_security_q = any(self.is_substring_match(expanded, word) for word in SECURITY_TRIGGERS)
+            is_cyber_synonym = any(any(self.is_substring_match(expanded, alias) for alias in aliases) for aliases in CYBER_SYNONYMS.values())
+            if is_security_q or is_cyber_synonym:
+                is_mitigation = any(self.is_substring_match(expanded, word) for word in ["fix", "prevent", "secure code", "mitigate", "remediate", "علاج", "الوقاية", "علاجها", "حلها"])
+                if is_mitigation:
+                    return {"intent": "mitigation_advice", "confidence": 0.85}
+                return {"intent": "security_definition", "confidence": 0.85}
+
+            is_follow_up = any(self.is_substring_match(expanded, word) for word in FOLLOW_UP_TRIGGERS)
             if is_follow_up:
                 return {"intent": "follow_up", "confidence": 0.75}
 
-        # 2. General security theory or definition question
-        is_security_q = any(word in cleaned for word in SECURITY_TRIGGERS)
-        is_cyber_synonym = any(any(alias in cleaned for alias in aliases) for aliases in CYBER_SYNONYMS.values())
-        if best_score < 0.4 and (is_security_q or is_cyber_synonym):
-            # Check if it asks for fix or mitigation
-            is_mitigation = any(word in cleaned for word in ["fix", "prevent", "secure code", "mitigate", "remediate", "علاج", "الوقاية"])
-            if is_mitigation:
-                return {"intent": "mitigation_advice", "confidence": 0.85}
-            return {"intent": "security_definition", "confidence": 0.85}
-
-        # 3. Code review detection
-        has_code_markers = any(m in raw_query for m in [
-            "def ", "function", "var ", "const ", "let ", "import ", "require(",
-            "class ", "select ", "insert ", "<?php", "include", "eval("
-        ])
-        if has_code_markers and len(raw_query.splitlines()) > 2:
-            return {"intent": "code_review", "confidence": 0.90}
-
-        # Minimum confidence threshold
-        if best_score < 0.25:
             return {"intent": "unknown", "confidence": best_score}
 
-        return {"intent": best_intent, "confidence": round(best_score, 2)}
+        return {"intent": best_intent, "confidence": best_score}

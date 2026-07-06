@@ -34,7 +34,7 @@ class GeminiService:
             
             # Configure Generation settings for rich diversity and high security expertise
             generation_config = {
-                "temperature": 0.75, # Balanced creativity to diversify output phrasing and formatting
+                "temperature": 0.85, # Balanced creativity to diversify output phrasing and formatting
                 "top_p": 0.95,
                 "top_k": 40,
                 "max_output_tokens": 2048,
